@@ -35,9 +35,4 @@ unload:
 install: thunderscope.ko
 	@make -C $(KDIR) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(shell pwd) modules_install
 
-udev-install:
-	@cp 70-thunderscope.rules /etc/udev/rules.d && \
-	udevadm control --reload-rules && udevadm trigger
-
-
 endif

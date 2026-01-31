@@ -10,3 +10,5 @@ litepcie_test
 litepcie_util
 *.a
 .vscode
+dkms.conf
+build/

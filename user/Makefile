@@ -1,29 +1,41 @@
-CFLAGS=-O2 -Wall -g -I../kernel -Iliblitepcie -MMD -fPIC
+
+PROGS=litepcie_util litepcie_test
+BUILD_DIR=../build/user
+
+CFLAGS=-O2 -Wall -g -I../kernel -Iliblitepcie -fPIC
 LDFLAGS=-g
+DEPFLAGS=-MMD -MF $(BUILD_DIR)
 CC=$(CROSS_COMPILE)gcc
 AR=ar
 
-PROGS=litepcie_util litepcie_test
+
+LIB_SRC=$(wildcard liblitepcie/*.c)
+LIB_OBJS=$(patsubst %.c,$(BUILD_DIR)/%.o,$(LIB_SRC))
+
+default: all
 
 all: $(PROGS)
 
-liblitepcie/liblitepcie.a: liblitepcie/litepcie_dma.o liblitepcie/litepcie_flash.o liblitepcie/litepcie_helpers.o
+$(BUILD_DIR)/liblitepcie/liblitepcie.a: $(LIB_OBJS)
 	ar rcs $@ $+
 	ranlib $@
 
-litepcie_util: liblitepcie/liblitepcie.a litepcie_util.o
-	$(CC) $(LDFLAGS) -o $@ $^ -Lliblitepcie -llitepcie
+litepcie_util: $(BUILD_DIR)/litepcie_util.o $(BUILD_DIR)/liblitepcie/liblitepcie.a
+	$(CC) $(LDFLAGS) -o $(BUILD_DIR)/$@ $< -L$(BUILD_DIR)/liblitepcie -llitepcie
 
-litepcie_test: liblitepcie/liblitepcie.a litepcie_test.o
-	$(CC) $(LDFLAGS) -o $@ $^ -Lliblitepcie -lm -llitepcie
+litepcie_test: $(BUILD_DIR)/litepcie_test.o $(BUILD_DIR)/liblitepcie/liblitepcie.a
+	$(CC) $(LDFLAGS) -o $(BUILD_DIR)/$@ $< -L$(BUILD_DIR)/liblitepcie -lm -llitepcie
 
 clean:
-	rm -f $(PROGS) *.o *.a *.d *~ liblitepcie/*.a liblitepcie/*.o liblitepcie/*.d
+	rm -rf $(BUILD_DIR)/*.o $(BUILD_DIR)/litepcie_util $(BUILD_DIR)/litepcie_test
+	rm -rf $(BUILD_DIR)/liblitepcie
 
-%.o: %.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+$(BUILD_DIR)/%.o: %.c
+	$(V) mkdir -p $(BUILD_DIR)
+	$(CC) -c $(CFLAGS) $(DEPFLAGS)/$*.d -o $@ $<
 
-liblitepcie/%.o: liblitepcie/%.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+$(LIB_OBJS): $(BUILD_DIR)/liblitepcie/%.o: liblitepcie/%.c
+	$(V) mkdir -p $(BUILD_DIR)/liblitepcie
+	$(CC) -c $(CFLAGS) $(DEPFLAGS)/liblitepcie/$*.d -o $@ $<
 
--include $(wildcard *.d)
+-include $(wildcard $(BUILD_DIR)/*.d)

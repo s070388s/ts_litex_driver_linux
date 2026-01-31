@@ -9,8 +9,7 @@ This driver may be manually built and installed using the provided makefile.  Th
 ### Building
 
 ```bash
-> cd kernel/
-> make
+> make kernel
 ```
 
 ### Install
@@ -18,7 +17,7 @@ This driver may be manually built and installed using the provided makefile.  Th
 Before connecting the Thunderscope, install the driver and the udev rules.
 
 ```bash
-> sudo make install
+> sudo make -C kernel install
 > sudo make udev-install
 ```
 
@@ -41,19 +40,15 @@ Kernel modules can be managed with `dkms`.  This will automatically rebuild sour
 To install the kernel module using DKMS:
 
 ```bash
-> cd kernel/
-> sudo dkms add .
-> sudo dkms build -m thunderscope -v 1.0
-> sudo dkms install -m thunderscope -v 1.0
+> sudo make dkms
 ```
 
 ### Post-Install
 
-If using dkms, you will need to copy the udev rules file to the appropriate directory.  This should be done manually, using the `make udev-install` target, or configuring the package (`.deb`, `.rpm`, `aur`, etc.) to do so.
+If using dkms, you will also need to install the udev rules file to the appropriate directory.  This should be done manually, using the `make udev-install` target, or configuring the package (`.deb`, `.rpm`, `aur`, etc.) to do so.
 
 ```bash
-> sudo cp kernel/70-thunderscope.rules /etc/udev/rules.d/
-> udevadm control --reload-rules && udevadm trigger
+> sudo make udev-install
 ```
 
 
@@ -62,5 +57,16 @@ If using dkms, you will need to copy the udev rules file to the appropriate dire
 To remove the module from DKMS:
 
 ```bash
-> sudo dkms remove -m thunderscope -v 1.0 --all
+> sudo make dkms-remove
 ```
+
+
+### DKMS Configuration Customization
+
+If your system or distrobution requires changes to the provided dkms.conf, you can generate the default file with the `dkms-conf` target.
+
+```bash
+> make dkms-conf
+```
+
+The file `kernel/dkms.conf` can then be modified before running `make dkms` as needed.
